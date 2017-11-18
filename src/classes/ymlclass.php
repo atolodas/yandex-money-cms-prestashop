@@ -179,6 +179,24 @@ class Yml
 
     public function getXmlShop()
     {
+		//** patched **
+		if(($buffer_data = Configuration::get('YA_MARKET_REPLACE_TEXT')) != '') {
+			$buffer_data = explode(',' , $buffer_data);
+			foreach($buffer_data as $val)
+			{
+				list($k, $v) = explode(':', $val);
+				$replace_actions['rename'][$k] = $v;
+			}
+		}
+		if(($buffer_data = Configuration::get('YA_MARKET_TO_UNION')) != '') {
+			$buffer_data = explode(',' , $buffer_data);
+			foreach($buffer_data as $val)
+			{
+				list($k, $v) = explode(':', $val);
+				$replace_actions['union'][$k] = $v;
+			}
+		}
+		//** patched **		
         $s = '<shop>' . "\r\n";
         $s .= $this->convertArrayToTag($this->shop);
         $s .= '<currencies>' . "\r\n";
@@ -191,6 +209,10 @@ class Yml
         foreach ($this->categories as $category) {
             $category_name = $category['name'];
             unset($category['name']);
+			//** patched **		
+			if(isset($replace_actions['rename'][$category['id']])) $category_name = $this->prepareField($replace_actions['rename'][$category['id']]);
+			if(isset($replace_actions['union'][$category['id']])) continue;
+			//** patched **				
             $s .= $this->convertArrayToAttr($category, 'category', $category_name);
         }
         $s .= '</categories>' . "\r\n";
@@ -202,6 +224,9 @@ class Yml
         foreach ($this->offers as $offer) {
             $data = $offer['data'];
             unset($offer['data']);
+			//** patched **		
+			if(isset($replace_actions['union'][$category['id']])) $data['categoryId'] = $replace_actions['union'][$category['id']];
+			//** patched **			
             $s .= $this->convertArrayToAttr($offer, 'offer', $this->convertArrayToTag($data));
         }
         $s .= '</offers>' . "\r\n";
